@@ -9,6 +9,7 @@ import { getChartIdea } from "~/server/ai";
 export default function HomePage() {
   const [headers, setHeaders] = useState<string[] | null>(null);
   const [rows, setRows] = useState<string[][] | null>(null);
+  const [charts, setCharts] = useState<string[] | null>(null);
 
   const [step, setStep] = useState<number>(1);
   const [pending, isPending] = useState<boolean>(false);
