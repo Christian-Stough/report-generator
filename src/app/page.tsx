@@ -1,64 +1,37 @@
 "use client";
 
 import { useState } from "react";
-//CONTRACT: This Component will accept CSV data,validate it is CSV, and then send it to the server for processing
-
-import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import Step_1 from "./_components/Step_1";
+import { getCsvData } from "~/server/csv";
+import type { CsvData } from "~/server/csv";
+import { getChartIdea } from "~/server/ai";
 
 export default function HomePage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [headers, setHeaders] = useState<string[] | null>(null);
+  const [rows, setRows] = useState<string[][] | null>(null);
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [step, setStep] = useState<number>(1);
+  const [pending, isPending] = useState<boolean>(false);
 
-    if (!file) {
-      setError("File is required");
-      return;
-    } else if (file.type !== "text/csv") {
-      setError("File must be a CSV file");
-      return;
-    }
+  const handleDataChange = async (value: File) => {
+    //isPending(true);
+
+    const form = new FormData();
+    form.append("file", value);
+
+    const data: CsvData = await getCsvData(form);
+
+    setRows(data.rows);
+    setHeaders(data.headers);
+
+    await getChartIdea(data.headers);
+
+    //isPending(false);
+    //setStep(2);
   };
 
-  return (
-    <main className="flex h-full w-full items-center justify-center">
-      <Card className="bg-card">
-        <CardHeader>
-          <CardTitle>Enter in Data</CardTitle>
-          <CardDescription className="text-red-500">
-            {error && error}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-8">
-          <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="file">File</Label>
-              <Input
-                type="file"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setError(null);
-                  setFile(e.target.files?.[0] as File | null);
-                }}
-              />
-            </div>
-            <Button type="submit" className="text-foreground w-full">
-              Submit
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter></CardFooter>
-      </Card>
-    </main>
-  );
+  if (pending) return <div>Loading...</div>;
+  else if (step === 1) return <Step_1 setData={handleDataChange} />;
+
+  return <div>Step 2</div>;
 }
